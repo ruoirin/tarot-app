@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ứng dụng Tarot - Khám phá Định mệnh của bạn</title>
+    <meta name="description" content="Một ứng dụng Tarot đơn giản cho phép bạn rút bài và nhận giải thích về quá khứ, hiện tại và tương lai.">
+    <meta name="keywords" content="Tarot, xem bói, lá bài, định mệnh, tương lai, quá khứ, hiện tại, ứng dụng">
+    <meta name="author" content="Vercel v0">
+
+    <style>
+        :root {
+            --bg-gradient-start: #1a0033;
+            --bg-gradient-end: #330066;
+            --text-color: #e0e0e0;
+            --accent-color-1: #ffcc00; /* Gold */
+            --accent-color-2: #a020f0; /* Purple */
+            --card-bg: rgba(255, 255, 255, 0.08);
+            --border-color: rgba(255, 255, 255, 0.15);
+            --shadow-color: rgba(0, 0, 0, 0.4);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start; /* Align items to start for header */
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+            overflow-x: hidden;
+            padding-bottom: 40px; /* Space for footer */
+        }
+
+        header {
+            padding: 20px;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.2);
+            box-shadow: 0 2px 10px var(--shadow-color);
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            font-size: 2.8em;
+            color: var(--accent-color-1);
+            text-shadow: 2px 2px 4px var(--shadow-color);
+            margin: 0;
+        }
+
+        main {
+            flex-grow: 1; /* Allow main content to take available space */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 1200px;
+            padding: 0 20px;
+        }
+
+        #controls {
+            margin-bottom: 40px;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 15px 30px;
+            background: linear-gradient(45deg, #8a2be2, var(--accent-color-2));
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 1.2em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4);
+            border: none;
+            cursor: pointer;
+        }
+
+        .button:hover {
+            background: linear-gradient(45deg, var(--accent-color-2), #8a2be2);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(138, 43, 226, 0.6);
+        }
+
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        #card-display {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            min-height: 300px; /* Ensure space for cards */
+            align-items: center;
+        }
+
+        .card-container {
+            background-color: var(--card-bg);
+            backdrop-filter: blur(5px);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 4px 15px var(--shadow-color);
+            width: 200px; /* Fixed width for cards */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px var(--shadow-color);
+        }
+
+        .card-image {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            max-width: 180px; /* Max width for image inside container */
+        }
+
+        .card-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: var(--accent-color-1);
+            margin-bottom: 5px;
+        }
+
+        .card-label {
+            font-size: 1em;
+            color: #ff99cc;
+            margin-bottom: 10px;
+        }
+
+        .card-description {
+            font-size: 0.9em;
+            color: var(--text-color);
+            line-height: 1.5;
+            text-align: left;
+        }
+
+        #initial-card-back {
+            width: 200px;
+            height: 300px; /* Approximate height for initial card back */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--card-bg);
+            backdrop-filter: blur(5px);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px var(--shadow-color);
+        }
+        #initial-card-back img {
+            width: 100%;
+            height: auto;
+            max-width: 180px;
+            border-radius: 8px;
+        }
+
+        #drawing-indicator {
+            font-size: 1.5em;
+            color: var(--text-color);
+            height: 300px; /* Match card display height */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #interpretation-display {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        #interpretation-display.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        #selected-card-details {
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+            position: relative;
+            transform: scale(0.8);
+            opacity: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        #interpretation-display.visible #selected-card-details {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        #selected-card-details h2 {
+            font-size: 2em;
+            color: var(--accent-color-1);
+            margin-bottom: 20px;
+        }
+
+        #selected-card-image {
+            width: 100%;
+            max-width: 250px; /* Max width for zoomed image */
+            height: auto;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        #selected-card-name {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: var(--accent-color-1);
+            margin-bottom: 10px;
+        }
+
+        #selected-card-meaning {
+            font-size: 1.1em;
+            line-height: 1.6;
+            color: var(--text-color);
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        #closeInterpretationBtn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background-color: var(--accent-color-2);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        #closeInterpretationBtn:hover {
+            background-color: #6a0dad;
+        }
+
+        footer {
+            margin-top: 40px;
+            font-size: 0.9em;
+            color: #b0b0b0;
+            width: 100%;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.2);
+            box-shadow: 0 -2px 10px var(--shadow-color);
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2em;
+            }
+            .button {
+                padding: 12px 25px;
+                font-size: 1.1em;
+            }
+            #card-display {
+                gap: 20px;
+            }
+            .card-container {
+                width: 160px;
+                padding: 10px;
+            }
+            .card-image {
+                max-width: 140px;
+            }
+            #initial-card-back {
+                width: 160px;
+                height: 240px;
+            }
+            #initial-card-back img {
+                max-width: 140px;
+            }
+            #drawing-indicator {
+                font-size: 1.2em;
+                height: 240px;
+            }
+            #selected-card-details {
+                padding: 20px;
+            }
+            #selected-card-details h2 {
+                font-size: 1.6em;
+            }
+            #selected-card-name {
+                font-size: 1.5em;
+            }
+            #selected-card-meaning {
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Ứng dụng Tarot</h1>
+    </header>
+
+    <main>
+        <section id="controls">
+            <button id="drawCardsBtn" class="button">Bắt Đầu Xem Bói</button>
+        </section>
+
+        <section id="card-display">
+            <div id="initial-card-back" class="card-container">
+                <img src="./tarot-images/card-back.png" alt="Mặt sau lá bài Tarot">
+            </div>
+        </section>
+
+        <section id="interpretation-display">
+            <div id="selected-card-details">
+                <h2>Giải thích Lá bài</h2>
+                <img id="selected-card-image" src="/placeholder.svg" alt="" class="zoomed-card-image">
+                <h3 id="selected-card-name"></h3>
+                <p id="selected-card-meaning"></p>
+                <button id="closeInterpretationBtn">X</button>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Ứng dụng Tarot. Mọi quyền được bảo lưu.</p>
+    </footer>
+
+    <script>
+        // Dữ liệu lá bài Tarot (đã dịch sang tiếng Việt)
+        const TAROT_CARDS_DATA = [
+            {
+                name: "Kẻ Khờ",
+                meaning: "Khởi đầu mới, sự ngây thơ, tự phát, một bước nhảy vọt của đức tin.",
+                imageURL: "./tarot-images/the-fool.png",
+                cardBack: "./tarot-images/card-back.png"
+            },
+            {
+                name: "Pháp Sư",
+                meaning: "Kỹ năng, biểu hiện, tháo vát, quyền lực.",
+                imageURL: "./tarot-images/the-magician.png",
+                cardBack: "./tarot-images/card-back.png"
+            },
+            {
+                name: "Nữ Tư Tế Tối Cao",
+                meaning: "Trực giác, kiến thức thiêng liêng, nữ tính thiêng liêng, bí ẩn.",
+                imageURL: "./tarot-images/the-high-priestess.png",
+                cardBack: "./tarot-images/card-back.png"
+            },
+            {
+                name: "Nữ Hoàng",
+                meaning: "Sự phong phú, nuôi dưỡng, sinh sản, thiên nhiên.",
+                imageURL: "./tarot-images/the-empress.png",
+                cardBack: "./tarot-images/card-back.png"
+            },
+            {
+                name: "Hoàng Đế",
+                meaning: "Quyền uy, cấu trúc, kiểm soát, lãnh đạo.",
+                imageURL: "./tarot-images/the-emperor.png",
+                cardBack: "./tarot-images/card-back.png"
+            },
+            {
+                name: "Giáo Hoàng",
+                meaning: "Truyền thống, thể chế, tâm linh, hướng dẫn.",
+                imageURL: "./tarot-images/the-hierophant.png",
+                cardBack: "./tarot-images/card-back.png"
+            },
+            {
+                name: "Đôi Tình Nhân",
+                meaning: "Tình yêu, hòa hợp, lựa chọn, quan hệ đối tác.",
+                imageURL: "./tarot-images/the-lovers.png",
+                cardBack: "./tarot-images/card-back.png"
+            },
+            {
+                name: "Cỗ Xe",
+                meaning: "Ý chí, kiểm soát, thành công, khẳng định.",
+                imageURL: "./tarot-images/the-chariot.png",
+                cardBack: "./tarot-images/card-back.png"
+            },
+            {
+                name: "Sức Mạnh",
+                meaning: "Can đảm, lòng trắc ẩn, sức mạnh nội tại, ảnh hưởng.",
+                imageURL: "./tarot-images/strength.png",
+                cardBack: "./tarot-images/card-back.png"
+            },
+            {
+                name: "Ẩn Sĩ",
+                meaning: "Nội tâm, cô độc, hướng dẫn, tự khám phá.",
+                imageURL: "./tarot-images/the-hermit.png",
+                cardBack: "./tarot-images/card-back.png"
+            },
+            {
+                name: "Bánh Xe Vận Mệnh",
+                meaning: "Chu kỳ, định mệnh, thay đổi, may mắn.",
+                imageURL: "./tarot-images/wheel-of-fortune.png",
+                cardBack: "./tarot-images/card-back.png"
+            },
+            {
+                name: "Công Lý",
+                meaning: "Công bằng, sự thật, trách nhiệm, pháp luật.",
+                imageURL: "./tarot-images/justice.png",
+                cardBack: "./tarot-images/card-back.png"
+            },
+            {
+                name: "Người Treo Ngược",
+                meaning: "Hy sinh, đầu hàng, góc nhìn mới, buông bỏ.",
+                imageURL: "./tarot-images/the-hanged-man.png",
+                cardBack: "./tarot-images/card-back.png"
+            },
+            {
+                name: "Cái Chết",
+                meaning: "Kết thúc, biến đổi, thay đổi, chuyển tiếp.",
+                imageURL: "./tarot-images/death.png",
+                cardBack: "./tarot-images/card-back.png"
+            },
+            {
+                name: "Tiết Độ",
+                meaning: "Cân bằng, điều độ, kiên nhẫn, mục đích.",
+                imageURL: "./tarot-images/temperance.png",
+                cardBack: "./tarot-images/card-back.png"
+            },
+            {
+                name: "Ác Quỷ",
+                meaning: "Chủ nghĩa vật chất, nghiện ngập, hạn chế, bóng tối.",
+                imageURL: "./tarot-images/the-devil.png",
+                cardBack: "./tarot-images/card-back.png"
+            },
+            {
+                name: "Tháp",
+                meaning: "Thay đổi đột ngột, biến động, hỗn loạn, khải thị.",
+                imageURL: "./tarot-images/the-tower.png",
+                cardBack: "./tarot-images/card-back.png"
+            },
+            {
+                name: "Ngôi Sao",
+                meaning: "Hy vọng, đức tin, đổi mới, cảm hứng.",
+                imageURL: "./tarot-images/the-star.png",
+                cardBack: "./tarot-images/card-back.png"
+            },
+            {
+                name: "Mặt Trăng",
+                meaning: "Trực giác, ảo tưởng, sợ hãi, tiềm thức.",
+                imageURL: "./tarot-images/the-moon.png",
+                cardBack: "./tarot-images/card-back.png"
+            },
+            {
+                name: "Mặt Trời",
+                meaning: "Niềm vui, thành công, sức sống, tích cực.",
+                imageURL: "./tarot-images/the-sun.png",
+                cardBack: "./tarot-images/card-back.png"
+            },
+            {
+                name: "Phán Xét",
+                meaning: "Tái sinh, thức tỉnh, đổi mới, tha thứ.",
+                imageURL: "./tarot-images/judgement.png",
+                cardBack: "./tarot-images/card-back.png"
+            },
+            {
+                name: "Thế Giới",
+                meaning: "Hoàn thành, hòa nhập, du lịch, thành tựu.",
+                imageURL: "./tarot-images/the-world.png",
+                cardBack: "./tarot-images/card-back.png"
+            }
+        ];
+
+        const drawCardsBtn = document.getElementById('drawCardsBtn');
+        const cardDisplay = document.getElementById('card-display');
+        const interpretationDisplay = document.getElementById('interpretation-display');
+        const selectedCardImage = document.getElementById('selected-card-image');
+        const selectedCardName = document.getElementById('selected-card-name');
+        const selectedCardMeaning = document.getElementById('selected-card-meaning');
+        const closeInterpretationBtn = document.getElementById('closeInterpretationBtn');
+        const initialCardBack = document.getElementById('initial-card-back');
+
+        const spreadLabels = ["Quá Khứ", "Hiện Tại", "Tương Lai"];
+        let readingStarted = false;
+        let drawing = false;
+
+        drawCardsBtn.addEventListener('click', drawCards);
+        closeInterpretationBtn.addEventListener('click', closeInterpretation);
+        interpretationDisplay.addEventListener('click', closeInterpretation); // Close on overlay click
+
+        function drawCards() {
+            if (drawing) return;
+
+            drawing = true;
+            drawCardsBtn.disabled = true;
+            drawCardsBtn.textContent = "Đang xáo bài và rút bài...";
+            cardDisplay.innerHTML = `<div id="drawing-indicator">Đang xáo bài và rút bài...</div>`;
+            
+            // Hide initial card back if it was visible
+            if (initialCardBack) {
+                initialCardBack.style.display = 'none';
+            }
+
+            setTimeout(() => {
+                const shuffled = [...TAROT_CARDS_DATA].sort(() => 0.5 - Math.random());
+                const selected = shuffled.slice(0, 3);
+                
+                cardDisplay.innerHTML = ''; // Clear drawing indicator
+
+                selected.forEach((card, index) => {
+                    const cardElement = document.createElement('div');
+                    cardElement.classList.add('card-container');
+                    cardElement.innerHTML = `
+                        <img src="${card.imageURL}" alt="${card.name}" class="card-image">
+                        <div class="card-name">${card.name}</div>
+                        <div class="card-label">${spreadLabels[index]}</div>
+                        <p class="card-description">${card.meaning}</p>
+                    `;
+                    cardElement.addEventListener('click', () => showInterpretation(card));
+                    cardDisplay.appendChild(cardElement);
+                });
+
+                readingStarted = true;
+                drawing = false;
+                drawCardsBtn.disabled = false;
+                drawCardsBtn.textContent = "Rút Bài Mới";
+            }, 1500); // Simulate shuffling time
+        }
+
+        function showInterpretation(card) {
+            selectedCardImage.src = card.imageURL;
+            selectedCardImage.alt = card.name;
+            selectedCardName.textContent = card.name;
+            selectedCardMeaning.textContent = card.meaning;
+            interpretationDisplay.classList.add('visible');
+        }
+
+        function closeInterpretation() {
+            interpretationDisplay.classList.remove('visible');
+        }
+
+        // Prevent closing when clicking inside the card details
+        document.getElementById('selected-card-details').addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+    </script>
+</body>
+</html>
